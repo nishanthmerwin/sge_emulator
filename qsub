@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+import sqlite3
+import sys
+import os
+
+'''
+Author:    Nishanth Merwin
+Purpose:   Creating a simple SGE simulator for developing software on an SGE grid
+
+# Create table as shown below
+c.execute("""
+CREATE TABLE "queue_log" (
+    `id`    INTEGER PRIMARY KEY AUTOINCREMENT,
+    `name`  TEXT NOT NULL,
+    `queue`  TEXT NOT NULL,
+    `slots`    TEXT NOT NULL,
+    `script_path`    TEXT NOT NULL,
+    `state` TEXT);
+""")
+'''
+
+
+try:
+    script = sys.argv[1]
+except:
+    raise Exception("No arguments provided")
+
+if not os.path.isfile(script):
+    raise Exception("Argument provided does not correspond to script")
+
+
+conn = sqlite3.connect('queue_list.db')
+c = conn.cursor()
+
+
+
