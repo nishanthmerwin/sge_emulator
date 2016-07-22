@@ -2,7 +2,7 @@
 import sqlite3
 import sys
 import os
-
+import re
 '''
 Author:    Nishanth Merwin
 Purpose:   Creating a simple SGE simulator for developing software on an SGE grid
@@ -28,9 +28,44 @@ except:
 if not os.path.isfile(script):
     raise Exception("Argument provided does not correspond to script")
 
+def findName(text):
+    pattern = re.compile('''\n#\$\s.*-N\s([A-z0-9]+)(?:\s|$)''')
+    match = pattern.search(text)
+    if not match:
+        raise Exception("No name found in file")
+    return match.group(1)
+
+def findQueue(text):
+    pattern = re.compile('''\n#\$\s.*-q\s([A-z0-9\-_\.]+)(?:\s|$)''')
+    match = pattern.search(text)
+    if not match:
+        raise Exception("No queue found in file")
+    return match.group(1)
+    
+def findSlots(text):
+    pattern = re.compile('''\n#\$\s.*-pe smp-high (\d)(?:\s|$)''')
+    match = pattern.search(text)
+    if not match:
+        raise Exception("No slots found in file")
+    return int(match.group(1))
+
+script_text = open(script).read()
+
+name = findName(script_text)
+queue = findQueue(script_text)
+slots = findSlots(script_text)
+state="running"
 
 conn = sqlite3.connect('queue_list.db')
 c = conn.cursor()
+t = (name,queue,slots,script,state)
+c.execute(''' INSERT INTO queue_log (name, queue, slots, script_path, state)
+                VALUES ( ? , ? , ? , ? , ? )
+                ''', t)
+conn.commit()
+conn.close()
+
+
 
 
 
