@@ -1,0 +1,137 @@
+#!/usr/bin/env python
+import sqlite3
+import sys
+import os
+import re
+import argparse
+from lxml import etree
+'''
+Author:    Nishanth Merwin
+Purpose:   Creating a simple SGE simulator for developing software on an SGE grid
+
+# Create table as shown below
+c.execute("""
+CREATE TABLE "queue_log" (
+    `id`    INTEGER PRIMARY KEY AUTOINCREMENT,
+    `name`  TEXT NOT NULL,
+    `queue`  TEXT NOT NULL,
+    `slots`    TEXT NOT NULL,
+    `script_path`    TEXT NOT NULL,
+    `state` TEXT);
+""")
+'''
+
+parser = argparse.ArgumentParser(description = "Check grid status.")
+parser.add_argument('-xml',action="store_true", required=True)
+
+args = vars(parser.parse_args())
+
+if not args['xml']:
+    raise Exception("This program only works with xml output right now")
+
+
+conn = sqlite3.connect('queue_list.db')
+c = conn.cursor()
+
+
+c.execute(''' SELECT * FROM queue_log where state=?''',('running',) )
+
+root = etree.Element("job_info")
+
+queue_info = etree.Element("queue_info") 
+
+root.append(queue_info)
+
+for record in c.fetchall():
+    job_list = etree.Element("job_list")
+    job_list.attrib["state"] = "running"
+    
+    job_num = etree.Element("JB_job_number")
+    job_num.text = str(record[0])
+    job_list.append(job_num)
+
+    prior = etree.Element("JAT_prio")
+    prior.text = "0.50000"
+    job_list.append(prior)
+    
+    name = etree.Element("JB_name")
+    name.text = str(record[1])
+    job_list.append(name)
+
+    owner = etree.Element("JB_owner")
+    owner.text = "merwin"
+    job_list.append(owner)
+
+    state = etree.Element("state")
+    state.text = "r"
+    job_list.append(state)
+
+    time = etree.Element("JB_start_time")
+    time.text = str(record[-1])
+    job_list.append(time)
+    
+    slots = etree.Element("slots")
+    slots.text = str(record[3])
+    job_list.append(slots)
+
+    queue_info.append(job_list)
+
+print etree.tostring(root, pretty_print=True)
+
+
+exit()
+
+'''
+<?xml version='1.0'?>
+<job_info  xmlns:xsd="http://gridengine.sunsource.net/source/browse/*checkout*/gridengine/source/dist/util/resources/schemas/qstat/qstat.xsd?revision=1.11">
+  <queue_info>
+    <job_list state="running">
+      <JB_job_number>29945</JB_job_number>
+      <JAT_prio>0.50000</JAT_prio>
+      <JB_name>revised_prism</JB_name>
+      <JB_owner>merwin</JB_owner>
+      <state>r</state>
+      <JAT_start_time>2016-07-21T16:43:56</JAT_start_time>
+      <queue_name>high_priority.q@MagarveyLab-cn1</queue_name>
+      <slots>2</slots>
+      <tasks>85</tasks>
+    </job_list>
+    <job_list state="running">
+      <JB_job_number>29945</JB_job_number>
+      <JAT_prio>0.50000</JAT_prio>
+      <JB_name>revised_prism</JB_name>
+      <JB_owner>merwin</JB_owner>
+      <state>r</state>
+      <JAT_start_time>2016-07-21T16:43:56</JAT_start_time>
+      <queue_name>high_priority.q@MagarveyLab-cn1</queue_name>
+      <slots>2</slots>
+      <tasks>92</tasks>
+    </job_list>
+  </queue_info>
+  <job_info>
+    <job_list state="pending">
+      <JB_job_number>29945</JB_job_number>
+      <JAT_prio>0.50000</JAT_prio>
+      <JB_name>revised_prism</JB_name>
+      <JB_owner>merwin</JB_owner>
+      <state>qw</state>
+      <JB_submission_time>2016-07-21T16:43:41</JB_submission_time>
+      <queue_name></queue_name>
+      <slots>2</slots>
+      <tasks>1225-65426:1</tasks>
+    </job_list>
+  </job_info>
+</job_info>
+'''
+
+t = (name,queue,slots,script,state)
+c.execute(''' INSERT INTO queue_log (name, queue, slots, script_path, state)
+                VALUES ( ? , ? , ? , ? , ? )
+                ''', t)
+conn.commit()
+conn.close()
+
+
+
+
+

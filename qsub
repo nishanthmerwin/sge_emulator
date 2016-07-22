@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-import sqlite3
-import sys
-import os
-import re
 '''
 Author:    Nishanth Merwin
 Purpose:   Creating a simple SGE simulator for developing software on an SGE grid
@@ -18,6 +14,13 @@ CREATE TABLE "queue_log" (
     `state` TEXT);
 """)
 '''
+
+
+import sqlite3
+import sys
+import os
+import re
+import datetime
 
 
 try:
@@ -56,11 +59,16 @@ queue = findQueue(script_text)
 slots = findSlots(script_text)
 state="running"
 
+date =  datetime.datetime.now()
+fmt = '''%Y-%m-%dT%X'''
+date_str = date.strftime(fmt)
+
+
 conn = sqlite3.connect('queue_list.db')
 c = conn.cursor()
-t = (name,queue,slots,script,state)
-c.execute(''' INSERT INTO queue_log (name, queue, slots, script_path, state)
-                VALUES ( ? , ? , ? , ? , ? )
+t = (name,queue,slots,script,state, date_str)
+c.execute(''' INSERT INTO queue_log (name, queue, slots, script_path, state, time)
+                VALUES ( ? , ? , ? , ? , ? , ?)
                 ''', t)
 conn.commit()
 conn.close()
