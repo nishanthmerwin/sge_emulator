@@ -2,6 +2,7 @@
 import sqlite3
 import sys
 import os
+from os.path import join
 import re
 import argparse
 from lxml import etree
@@ -29,17 +30,15 @@ args = vars(parser.parse_args())
 if not args['xml']:
     raise Exception("This program only works with xml output right now")
 
-
-conn = sqlite3.connect('queue_list.db')
+script_path =  os.path.realpath(__file__)
+sge_folder = os.path.dirname(script_path)
+conn = sqlite3.connect(join( sge_folder, 'queue_list.db') )
 c = conn.cursor()
 
-
-c.execute(''' SELECT * FROM queue_log where state=?''',('running',) )
+c.execute(''' SELECT * FROM queue_log where state="running"''' )
 
 root = etree.Element("job_info")
-
 queue_info = etree.Element("queue_info") 
-
 root.append(queue_info)
 
 for record in c.fetchall():
@@ -66,7 +65,7 @@ for record in c.fetchall():
     state.text = "r"
     job_list.append(state)
 
-    time = etree.Element("JB_start_time")
+    time = etree.Element("JAT_start_time")
     time.text = str(record[-1])
     job_list.append(time)
     
@@ -74,9 +73,13 @@ for record in c.fetchall():
     slots.text = str(record[3])
     job_list.append(slots)
 
+    queue_name = etree.Element("queue_name")
+    queue_name.text = str(record[2])
+    job_list.append(queue_name)
+    
     queue_info.append(job_list)
 
-print etree.tostring(root, pretty_print=True)
+print etree.tostring(root, pretty_print=True, xml_declaration=True)
 
 
 exit()
