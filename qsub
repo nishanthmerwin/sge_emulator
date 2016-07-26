@@ -58,7 +58,7 @@ script_text = open(script).read()
 name = findName(script_text)
 queue = findQueue(script_text)
 slots = findSlots(script_text)
-state="running"
+state="pending"
 
 date =  datetime.datetime.now()
 fmt = '''%Y-%m-%dT%X'''

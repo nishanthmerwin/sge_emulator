@@ -40,7 +40,6 @@ c.execute(''' SELECT * FROM queue_log where state="running"''' )
 root = etree.Element("job_info")
 queue_info = etree.Element("queue_info") 
 root.append(queue_info)
-
 for record in c.fetchall():
     job_list = etree.Element("job_list")
     job_list.attrib["state"] = "running"
@@ -78,6 +77,42 @@ for record in c.fetchall():
     job_list.append(queue_name)
     
     queue_info.append(job_list)
+
+c.close()
+cur = conn.cursor()
+cur.execute(''' SELECT * FROM queue_log WHERE state="pending"''')
+
+
+job_info = etree.Element("job_info")
+for record in cur.fetchall():
+
+    job_list = etree.Element("job_list")
+    job_list.attrib["state"] = "pending"
+    
+    name = etree.Element("JB_name")
+    name.text = str(record[1])
+    job_list.append(name)
+
+    owner = etree.Element("JB_owner")
+    owner.text = "merwin"
+    job_list.append(owner)
+
+    state = etree.Element("state")
+    state.text = "qw"
+    job_list.append(state)
+
+    time = etree.Element("JB_submission_time")
+    time.text = str(record[-1])
+    job_list.append(time)
+    
+    slots = etree.Element("slots")
+    slots.text = str(record[3])
+    job_list.append(slots)
+
+    job_info.append(job_list)
+root.append(job_info)
+cur.close()
+
 
 print etree.tostring(root, pretty_print=True, xml_declaration=True)
 
