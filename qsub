@@ -33,7 +33,7 @@ if not os.path.isfile(script):
     raise Exception("Argument provided does not correspond to script")
 
 def findName(text):
-    pattern = re.compile('''\n#\$\s.*-N\s([A-z0-9\-]+)(?:\s|$)''')
+    pattern = re.compile('''\n#\$\s.*-N\s([A-z][A-z0-9\-]+)(?:\s|$)''')
     match = pattern.search(text)
     if not match:
         raise Exception("No name found in file")
